@@ -19,8 +19,11 @@ const TAB_CATEGORY: Record<BetTab, string> = {
 
 const PAGE_SIZE = 10;
 
-function isoDate(d: Date) {
-    return d.toISOString().split("T")[0];
+const DEFAULT_START_DATE = "2026-09-10";
+const DEFAULT_END_DATE = "2026-09-17";
+
+function formatBetDate(iso: string) {
+    return iso.replace("T", " ").slice(0, 16);
 }
 
 function resultLabel(r: string) {
@@ -101,24 +104,17 @@ const BetHistoryPage = () => {
     const [activeTab, setActiveTab] = useState<BetTab>("casino");
     const [filterResult, setFilterResult] = useState("");
 
-    const now = new Date();
-    const week = new Date();
-    week.setDate(now.getDate() - 7);
-    const [startDate, setStartDate] = useState(isoDate(week));
-    const [endDate, setEndDate] = useState(isoDate(now));
+    const [startDate, setStartDate] = useState(DEFAULT_START_DATE);
+    const [endDate, setEndDate] = useState(DEFAULT_END_DATE);
 
     const [currentPage, setCurrentPage] = useState(1);
 
     const filteredItems = useMemo(() => {
-        const sd = new Date(startDate);
-        sd.setHours(0, 0, 0, 0);
-        const ed = new Date(endDate);
-        ed.setHours(23, 59, 59, 999);
         return DEMO_BET_HISTORY.filter((item) => {
             if (item.gameCategory !== TAB_CATEGORY[activeTab]) return false;
             if (filterResult && item.result !== filterResult) return false;
-            const t = new Date(item.createdAt).getTime();
-            return t >= sd.getTime() && t <= ed.getTime();
+            const day = item.createdAt.slice(0, 10);
+            return day >= startDate && day <= endDate;
         });
     }, [activeTab, filterResult, startDate, endDate]);
 
@@ -141,7 +137,7 @@ const BetHistoryPage = () => {
             betAmount: item.betAmount,
             winAmount: item.winAmount,
             result: item.result,
-            date: new Date(item.createdAt).toLocaleString("ko-KR"),
+            date: formatBetDate(item.createdAt),
         }));
     }, [items]);
 
